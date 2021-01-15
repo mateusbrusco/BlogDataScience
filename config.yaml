@@ -1,0 +1,40 @@
+baseURL: http://example.org/
+languageCode: en-us
+title: BlogDataScience
+theme: hugo-ink
+paginate: 5
+copyright: © Todos os direitos Reservados
+pygmentsstyle: vs
+pygmentscodefences: yes
+pygmentscodefencesguesssyntax: yes
+googleAnalytics: UA-123-45
+disqusShortname: ink-demo
+params:
+  avatar: https://image.freepik.com/vetores-gratis/homem-de-negocios-pintura-barra-grafico-rolo-tinta_3446-427.jpg 
+  disableDisqusTypes: page
+  featherIconsCDN: yes
+  mode: auto
+  social:
+    - icon: github
+      name: Github
+      url: https://github.com/mateusbrusco/BlogDataScience
+    - icon: rss
+      name: RSS
+      url: /index.xml
+  subtitle: Sou **iniciante** na área de Ciência de Dados. Vou postar aqui análises sobre temas que acho relevantes. 
+menu:
+  main:
+    - name: Página Inicial
+      url: /
+      weight: 1
+    - name: Todos os Posts
+      url: /posts
+      weight: 2
+    - name: Sobre
+      url: /about
+      weight: 3
+    - name: Tags
+      url: /tags
+      weight: 4
+taxonomies:
+  tag: tags
