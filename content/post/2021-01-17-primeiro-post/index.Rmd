@@ -1,0 +1,11 @@
+---
+title: Primeiro Post
+author: Mateus B. de Freitas
+date: '2021-01-17'
+slug: primeiro-post
+categories:
+  - R
+tags:
+  - plot
+  - R Markdown
+---
