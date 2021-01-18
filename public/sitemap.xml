@@ -3,20 +3,20 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/about/</loc>
+    <loc>https://pontoforadacurva.netlify.app/about/</loc>
     <lastmod>2016-05-05T21:48:51-07:00</lastmod>
   </url>
   
   <url>
-    <loc>/categories/</loc>
+    <loc>https://pontoforadacurva.netlify.app/categories/</loc>
   </url>
   
   <url>
-    <loc>/</loc>
+    <loc>https://pontoforadacurva.netlify.app/</loc>
   </url>
   
   <url>
-    <loc>/tags/</loc>
+    <loc>https://pontoforadacurva.netlify.app/tags/</loc>
   </url>
   
 </urlset>

@@ -1,9 +1,9 @@
-baseurl: /
+baseurl: "https://pontoforadacurva.netlify.app/"
 languageCode: en-us
 title: Ponto Fora da Curva
 theme: hugo-lithium
-googleAnalytics: ''
-disqusShortname: ''
+googleAnalytics: 'G-CQMCQSDMN3'
+disqusShortname: 'ponto-fora-da-curva'
 ignoreFiles:
   - \.Rmd$
   - \.Rmarkdown$
