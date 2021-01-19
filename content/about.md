@@ -1,6 +1,6 @@
 ---
 date: "2021-01-18T21:42:51-07:00"
-title: About
+title: Sobre
 ---
 
 Sou Biólogo (Unipar-PR), Mestre e Doutor em Ciências (área de concentração de Recursos Genéticos Vegetais; UFSC-SC). Durante a pós-graduação, trabalhei com controle alternativo de doenças de plantas utilizando polissacarídeos algais. 
