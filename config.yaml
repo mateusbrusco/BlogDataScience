@@ -33,6 +33,6 @@ params:
   highlightjsVersion: 9.12.0
   logo:
     alt: Logo
-    height: 50
-    url: logo.png
+    height: 50    
+    url: logo_pfc.png
     width: 50
