@@ -3,43 +3,20 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://pontoforadacurva.netlify.app/about/</loc>
+    <lastmod>2016-05-05T21:48:51-07:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://pontoforadacurva.netlify.app/categories/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://pontoforadacurva.netlify.app/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://pontoforadacurva.netlify.app/post/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://pontoforadacurva.netlify.app/tags/r/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://pontoforadacurva.netlify.app/categories/r/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://pontoforadacurva.netlify.app/tags/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://pontoforadacurva.netlify.app/2021/01/18/teste/</loc>
-    <lastmod>2021-01-18T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://pontoforadacurva.netlify.app/about/</loc>
-    <lastmod>2016-05-05T21:48:51-07:00</lastmod>
   </url>
   
 </urlset>

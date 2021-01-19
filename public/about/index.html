@@ -27,6 +27,7 @@
 
 
 
+    <link rel="manifest" href="/manifest.json">
   </head>
   <body>
     <div class="wrapper">
@@ -96,6 +97,22 @@
 
 
 </main>
+
+<script>
+  if('serviceWorker' in navigator) {
+      navigator.serviceWorker
+          .register('/sw.js', { scope: '/' })
+          .then(function(registration) {
+              
+          });
+
+      navigator.serviceWorker
+          .ready
+          .then(function(registration) {
+              
+          });
+  }
+</script>
 
       <footer class="footer">
         <ul class="footer-links">

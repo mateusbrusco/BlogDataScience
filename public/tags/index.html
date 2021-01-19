@@ -29,6 +29,7 @@
 
 
 
+    <link rel="manifest" href="/manifest.json">
   </head>
   <body>
     <div class="wrapper">
@@ -62,19 +63,25 @@
     
     
     
-    <h2 class="archive-title">2021</h2>
-    
-    <article class="archive-item">
-      <a href="/tags/r/" class="archive-item-link">R</a>
-      <span class="archive-item-date">
-        2021-01-18
-      </span>
-    </article>
-    
-    
   </div>
 
 </main>
+
+<script>
+  if('serviceWorker' in navigator) {
+      navigator.serviceWorker
+          .register('/sw.js', { scope: '/' })
+          .then(function(registration) {
+              
+          });
+
+      navigator.serviceWorker
+          .ready
+          .then(function(registration) {
+              
+          });
+  }
+</script>
 
       <footer class="footer">
         <ul class="footer-links">
