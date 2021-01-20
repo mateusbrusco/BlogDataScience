@@ -19,7 +19,7 @@ menu:
     - name: GitHub
       url: https://github.com/mateusbrusco
     - name: E-mail
-      url: "mailto:mateusbrusco@gmail.com"
+      url: "mailto:mateusbrusco@gmail.com?subject=Contato sobre o Blog Ponto Fora da Curva"
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
