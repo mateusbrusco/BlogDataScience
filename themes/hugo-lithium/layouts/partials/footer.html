@@ -2,7 +2,7 @@
   if('serviceWorker' in navigator) {
       navigator.serviceWorker
           .register('/sw.js', { scope: '/' })
-          .then(function(registration) {
+          .then(function() {
               //console.log('Service Worker Registered');
           });
 
@@ -12,6 +12,7 @@
               //console.log('Service Worker Ready');
           });
   }
+  
 </script>
 
       <footer class="footer">
