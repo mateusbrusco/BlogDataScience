@@ -41,9 +41,15 @@
       "src": "/appicons/favicon-96x96.png",
       "sizes": "96x96",
       "type": "image/png"
+    },
+    {
+      "src": "/appicons/maskable_icon_x1.png",
+      "sizes": "196x196",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "https://pontoforadacurva.netlify.app/",
+  "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",
