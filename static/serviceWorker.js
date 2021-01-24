@@ -1,6 +1,7 @@
+//Colocar aqui os nomes dos caches atuais.
 var cacheEstaticoAtual = 'static-v2';
 var cacheDinamicoAtual = 'dynamic';
-//comentario
+
 self.addEventListener('install', function(event) {
   console.log('[Service Worker] Installing Service Worker ...', event);
   event.waitUntil(
