@@ -1,5 +1,5 @@
 baseurl: "https://pontoforadacurva.netlify.app/"
-languageCode: en-us
+languageCode: pt-BR
 title: Ponto Fora da Curva
 theme: hugo-lithium
 googleAnalytics: 'UA-97237425-2'
