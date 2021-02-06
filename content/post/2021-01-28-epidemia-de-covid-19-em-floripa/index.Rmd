@@ -1,0 +1,227 @@
+---
+title: "Epidemia de COVID-19 em Floripa - Parte 1"
+author: "Mateus B. de Freitas"
+date: '2021-02-05'
+lang: pt-BR
+slug: epidemia-de-covid-19-em-floripa-p1
+categories: Análise Exploratória de Dados
+tags:
+- AED
+- Coronavírus
+- Sars-CoV-2
+- Florianópolis
+---
+```{r, include=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(gt)
+library(reshape2)
+```
+
+```{r, echo=FALSE, results='hide'}
+
+#Carrega arquivo com todos os casos notificados para municipio_residencia == Florianópolis
+covid <- read.csv2("casos_covid.csv", sep = ";", fileEncoding = "UTF-8")
+head(covid)
+tail(covid)
+
+#Remove casos com classificacao_final == descartado e == não informado
+casos_confirmados <- covid %>%
+                       filter(classificacao_final == "CONFIRMAÇÃO LABORATORIAL" | 
+                              classificacao_final == "CONFIRMAÇÃO CLÍNICO EPIDEMIOLÓGICO")
+
+# 52.828 confirmação laboratorial/confirmação clínico epidemiológico e 50.150 descartados/não informados 
+```
+
+# Epidemia de COVID-19 em Floripa
+Neste primeiro post farei uma análise exploratória dos dados relacionados à epidemia do novo coronavírus em Floripa (cidade onde moro atualmente). Para isso, coletei dados no [Portal Covidômetro Floripa](https://covidometrofloripa.com.br/) e no [Relatório de mobilidade da comunidade](https://www.google.com.br/covid19/mobility/) fornecido pelo Google. O período selecionado foi de 09/03/2020 até 31/01/2021.
+
+Considerando a riqueza de informações fornecidas pelo conjunto de dados, optei por dividir esse post em dois. Neste post (parte 1), vou analizar o progresso da epidemia e verificar a sua relação com a mobilidade de pessoas na cidade. Na segunda parte, vou analisar as demais variáveis presentes no conjunto de dados (faixa etária, sexo, bairro e outras). Então, partiu!? 
+
+## Explorando os casos confirmados do novo coronavírus em Floripa
+Observado a figura 1, a primeira coisa que me chamou a atenção foram essas repetidas descidas no número de casos confirmados. Por alguns momentos, pensei que poderia ter feito algo errado (completamente possível) durante o tratamento inicial dos dados. Porém, após alguns minutos refletindo e olhando mais atentamente para os dados, cheguei a conclusão de que essas quedas na notificação de casos ocorrem em finais de semana! A explicação exata eu desconheço porém, posso hipotetizar que isso se deve a laboratórios fechados, quantidade reduzida de pessoal ou a outros fatores.
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+
+casos_confirmados$data_notificacao <- as.Date(casos_confirmados$data_notificacao)
+
+#Trocando valores de data_notificacao inválidas para valores de data_teste
+casos_confirmados[casos_confirmados$data_notificacao == "2000-08-03",]$data_notificacao = "2020-07-13"
+casos_confirmados[casos_confirmados$data_notificacao == "2002-12-17",]$data_notificacao = "2020-12-17"
+casos_confirmados[casos_confirmados$data_notificacao == "2020-01-19",]$data_notificacao = "2020-11-19"
+casos_confirmados[casos_confirmados$data_notificacao == "2020-02-02",]$data_notificacao = "2020-12-02"
+casos_confirmados[casos_confirmados$data_notificacao == "2020-02-22",]$data_notificacao = "2020-03-24"
+casos_confirmados[33967, ]$data_notificacao = "2021-01-14"
+casos_confirmados[38382, ]$data_notificacao = "2021-01-12"
+
+#Removendo datas de notificação inválidas
+casos_confirmados <- casos_confirmados[-c(41199, 41371), ]
+
+casos_por_dia <- casos_confirmados %>%
+                  group_by(data_notificacao) %>%
+                  summarise(casos = n()) %>%
+                  arrange(data_notificacao)
+sum(casos_por_dia$casos)
+
+#Remove primeiro dia de fevereiro 
+casos_por_dia <- casos_por_dia[-332, ]
+
+head(casos_por_dia)
+tail(casos_por_dia)
+```
+
+```{r figura-1, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Número de casos de COVID-19 confirmados em Florianópolis no período de 09/03/2020 a 31/01/2021"}
+
+ggplot(data = casos_por_dia, aes(x = data_notificacao, y = casos)) +
+  geom_line() +
+  xlab("Data") +
+  ylab("Número de casos confirmados") +
+  scale_x_date(date_labels = "%d/%m", date_breaks = "1 month") +
+  annotate(geom = "text", 
+           x = as.Date("2020-07-24"), 
+           y = 321, 
+           label = "1ª onda?", 
+           hjust = "center", 
+           vjust = -1) +
+  annotate(geom = "text", 
+           x = as.Date("2020-10-26"), 
+           y = 669, 
+           label = "2ª onda?", 
+           hjust = "left", 
+           vjust = -0.75) +
+  annotate(geom = "text", 
+           x = as.Date("2021-01-11"), 
+           y = 509, 
+           label = "3ª onda ou 2ª?", 
+           hjust = "center", 
+           vjust = -1) +
+  theme_classic()
+```
+
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+#Cria nova coluna em casos_por_dia contendo somente o mês e o ano de notificação
+
+casos_por_dia$mes_ano <- format(as.Date(casos_por_dia$data_notificacao), "%Y-%m")
+
+#Sumariza o número de casos confirmados por mês
+casos_por_dia %>% 
+  group_by(mes_ano) %>%
+  summarise(total_casos = sum(casos))
+```
+
+O primeiro registro de caso confirmado ocorreu em 09/03/2020. Em todo o mês de março de 2020, foram registrados 148 casos da COVID-19. A partir dai, o número de casos registrados diariamente aumentou até atingir um pico de 326 casos em 20/07/2020. Em seguida, pode-se observar uma queda no número de casos registrados até o dia 02/09/2020 quando foram registrados 86 novos casos. Essa, caro(a) leitor(a), poderia ser considerada a primeira onda da epidemia (não sou epidemiologista mas, poderia ser caracterizada como uma ([referência](https://theconversation.com/what-makes-a-wave-of-disease-an-epidemiologist-explains-141573)).
+
+Durante o mês de setembro de 2020, foram registrado, em média, 75 casos por dia. Porém, a partir de outubro, o número de registros de casos voltou a aumentar atingindo um pico de 656 casos registrado em 18/11/2020! Este valor é o dobro do máximo registrado na "onda" anterior! Em seguida, pode-se observar um decréscimo acompanhado de novo aumento no número de casos até o início de dezembro. Neste momento, podemos observar uma queda no número de casos até o fim de dezembro quando foram registrados 183 casos no dia 31. Olhando a figura, esta poderia ser considerada uma segunda onda porém, a queda no registro de casos ocorreu exatamente na época de final de ano. Esse fato nos permite questionar: aqueles fatores que reduzem a notificação de casos nos finais de semana poderiam estar atuando nessa época também?
+
+No início do ano de 2021, podemos observar novamente um aumento na notificação diária de casos atingindo um pico de 509 no dia 11/01. Essa poderia ser considerada uma terceira onda que parece estar seguindo para seu fim já que o número de casos registrados está diminuindo desde então chegando a 32 no dia 28/01. Alternativamente, este decréscimo poderia ser o fim da segunda onda como discutido acima. 
+
+## Explorando o número de mortes associadas ao novo Coronavírus em Floripa
+Foram registrados, até o dia 31 de janeiro de 2021, 393 óbitos associados à COVID-19 em Florianópolis. 
+
+A primeira morte associada à doença aconteceu em 25/03. A partir daí, foram registrados 3, 6 e 4 óbitos em março, abril e maio de 2020, respectivamente. Em junho de 2020, o número de óbitos registrados saltou para 23. Em seguida (julho), os óbitos quase que triplicaram em relação ao mês anterior. Este pico coincidiou com o pior momento da primeira onda de casos registrados (\@ref(fig:figura-1)). Por fim, em agosto, foram registrados 35 óbitos. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+#Coleta óbitos confirmados, agrupa por data e armazena no objeto obitos_por_dia
+obitos_por_dia <- casos_confirmados %>%
+                    filter(obito == "SIM") %>%
+                    group_by(data_notificacao) %>%
+                    summarise(obitos = n())
+
+obitos_por_dia$data_notificacao <- as.Date(obitos_por_dia$data_notificacao)
+
+#Cria nova coluna em obitos_por_dia contendo somente o mês e o ano de data_notificacao
+obitos_por_dia$mes_ano <- format(as.Date(obitos_por_dia$data_notificacao), "%Y-%m")
+
+#Cria tabela com número total de óbitos por mês
+obitos_por_dia %>%
+  group_by(mes_ano) %>%
+  summarise(obitos_por_mes = sum(obitos)) %>%
+  gt() %>%
+  summary_rows(
+    columns = vars(obitos_por_mes),
+    fns = list(Total = ~sum(.)),
+    formatter = fmt_number,
+    decimals = 0) %>%
+  tab_header(
+    title = md("**Mortes associadas à COVID-19 em Florianópolis**"),
+    subtitle = "Período de março de 2020 à janeiro de 2021") %>%
+  cols_label(
+    mes_ano = md("**Mês e ano**"),
+    obitos_por_mes = md("**Total de óbitos**"))
+```
+
+Assim como para o número de casos (\@ref(fig:figura-1)), o mês de setembro foi caracterizado por um baixo número de óbitos registrados (8). Nos meses seguintes porém, este número aumentou dramaticamente atingindo um pico de 88 óbitos registrados em novembro. A partir de então, este número vem diminuindo sendo que, no mês de janeiro de 2021, foram registrados 31 óbitos.  
+
+## Explorando dados de mobilidade de pessoas 
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+
+#Carregando arquivo com dados de mobilidade
+mobilidade <- read.csv2("relatorio_mobilidade_florianopolis.csv", sep = ";", fileEncoding = "UTF-8")
+
+head(mobilidade)
+tail(mobilidade)
+
+#Removendo colunas desnecessárias
+mobilidade <- mobilidade[ , 8:14]
+```
+
+Como podemos observar na Figura \@ref(fig:figura-2), a visita de pessoas a lugares como lojas, bares, restaurantes, parques estações de transporte público e de trabalho caiu drasticamente por volta do dia 18/03/2020. Nesta época, decretos do estado e do município determinaram o fechamento destes locais ([Referência](https://noticias.uol.com.br/ultimas-noticias/agencia-estado/2020/06/08/florianopolis-uma-cidade-que-ficou-32-dias-sem-mortes.htm)). A permanência em residência, por sua vez, aumentou na mesma época. Isto mostra que, pelo menos no início, as pessoas seguiram as determinações de estado e município e permaneceram em casa para evitar a contaminação com o no novo coronavírus. 
+
+```{r figura-2, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Mudanças na mobilidade de pessoas ao longo do tempo. Fonte: Relatório de mobilidade da comunidade - Google"}
+
+#Converte o tipo de dado de date para data
+mobilidade$date <- as.Date(mobilidade$date)
+
+#Cria novo objeto com todas as variáveis na mesma coluna para gráfico
+mobilidade_grafico <- melt(mobilidade, id.vars = "date")
+
+ggplot(data = mobilidade_grafico, 
+       aes(x = date, 
+           y = value,
+           colour = variable)) +
+  geom_line() +
+  theme(legend.position = "top",
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(color = "black"),
+        legend.box.background = element_blank(),
+        legend.background = element_blank(),
+        legend.key = element_blank()) +
+  scale_colour_manual("",
+                      breaks = c("retail_and_recreation_percent_change_from_baseline",
+                                 "grocery_and_pharmacy_percent_change_from_baseline",
+                                 "parks_percent_change_from_baseline",
+                                 "transit_stations_percent_change_from_baseline",
+                                 "workplaces_percent_change_from_baseline",
+                                 "residential_percent_change_from_baseline"),
+                      labels = c("Varejo e lazer",
+                                 "Mercados e farmácias",
+                                 "Parques",
+                                 "Estações de transp. público",
+                                 "Locais de trabalho",
+                                 "Residencial"),
+                      values = c("#1B9E77", 
+                                 "#D95F02",
+                                 "#7570B3",
+                                 "#E7298A",
+                                 "#66A61E",
+                                 "#E6AB02")) +
+ scale_x_date(date_labels = "%d/%m", 
+               date_breaks = "1 month") +
+  geom_hline(yintercept = 0, 
+             linetype = "dashed") +
+  xlab("Data") +
+  ylab("Mudanças na mobilidade de pessoas (%)")
+```
+
+A partir de abril de 2020, a visita de pessoas a locais públicos aumentou gradativamente até se aproximar e, em alguns casos, ultrapassar o valor de referência (período de final de ano). Assim, podemos apontar que o aumento do número de casos e mortes pelo novo coronavírus ao longo do tempo deve-se, pelo menos em parte, ao aumento da circulação de pessoas e as [algomerações ilegais](https://www.nsctotal.com.br/noticias/sc-tem-ao-menos-133-ocorrencias-de-aglomeracoes-e-festas-clandestinas-no-feriadao). 
+
+A permanência de pessoas em casa, por sua vez, diminuiu ao longo do tempo permancendo, porém, acima do valor de referência. 
+
+A partir do início do ano de 2021, a visita de pessoas a locais públicos voltou a diminuir. Isto se deve, possivelmente, à preocupação dos moradores com o aumento da circulação de turistas (meu caso) e/ou fortes chuvas registradas no mês de janeiro (meu caso também). De qualquer forma, as principais formas de prevenção são o distanciamento social, evitar algomerações, usar máscara, lavar as mãos [Recomendações da OMS](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public).
+
+Assim, concluímos a primeira parte do post sobre a análise da epidemia de COVID-19 em Florianópolis. No segundo post, vamos analizar as características das pessoas que foram infectadas e que faleceram devido a este vírus. Até lá!
+
+Todos os conjuntos de dados e o código utilizados estão disponíveis no [meu GitHub](https://github.com/mateusbrusco/BlogDataScience/tree/main/content).

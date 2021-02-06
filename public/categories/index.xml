@@ -5,6 +5,16 @@
     <link>https://pontoforadacurva.netlify.app/categories/</link>
     <description>Recent content in Categories on Ponto Fora da Curva</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>pt-BR</language><atom:link href="https://pontoforadacurva.netlify.app/categories/index.xml" rel="self" type="application/rss+xml" />
+    <language>pt-BR</language>
+    <lastBuildDate>Fri, 05 Feb 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://pontoforadacurva.netlify.app/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Análise Exploratória de Dados</title>
+      <link>https://pontoforadacurva.netlify.app/categories/an%C3%A1lise-explorat%C3%B3ria-de-dados/</link>
+      <pubDate>Fri, 05 Feb 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://pontoforadacurva.netlify.app/categories/an%C3%A1lise-explorat%C3%B3ria-de-dados/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>

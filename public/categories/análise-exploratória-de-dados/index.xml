@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Análise Exploratória de Dados on Ponto Fora da Curva</title>
+    <link>https://pontoforadacurva.netlify.app/categories/an%C3%A1lise-explorat%C3%B3ria-de-dados/</link>
+    <description>Recent content in Análise Exploratória de Dados on Ponto Fora da Curva</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>pt-BR</language>
+    <lastBuildDate>Fri, 05 Feb 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://pontoforadacurva.netlify.app/categories/an%C3%A1lise-explorat%C3%B3ria-de-dados/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Epidemia de COVID-19 em Floripa - Parte 1</title>
+      <link>https://pontoforadacurva.netlify.app/2021/02/05/epidemia-de-covid-19-em-floripa-p1/</link>
+      <pubDate>Fri, 05 Feb 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://pontoforadacurva.netlify.app/2021/02/05/epidemia-de-covid-19-em-floripa-p1/</guid>
+      <description>Epidemia de COVID-19 em FloripaNeste primeiro post farei uma análise exploratória dos dados relacionados à epidemia do novo coronavírus em Floripa (cidade onde moro atualmente). Para isso, coletei dados no Portal Covidômetro Floripa e no Relatório de mobilidade da comunidade fornecido pelo Google. O período selecionado foi de 09/03/2020 até 31/01/2021.
+Considerando a riqueza de informações fornecidas pelo conjunto de dados, optei por dividir esse post em dois.</description>
+    </item>
+    
+  </channel>
+</rss>
