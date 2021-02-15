@@ -1,0 +1,85 @@
+---
+title: Epidemia de COVID-19 em Floripa - Parte 2
+author: Mateus B. de Freitas
+date: '2021-02-21'
+slug: epidemia-de-covid-19-em-floripa-parte-2
+categories:
+  - Análise Exploratória de Dados
+tags:
+  - AED
+  - Coronavírus
+  - Florianópolis
+  - Sars-CoV-2
+---
+```{r, include=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(gt)
+library(reshape2)
+```
+
+```{r, echo=FALSE, results='hide'}
+
+#Carrega arquivo com todos os casos notificados para municipio_residencia == Florianópolis
+covid <- read.csv2("casos_covid.csv", sep = ";", fileEncoding = "UTF-8")
+head(covid)
+tail(covid)
+
+#Remove casos com classificacao_final == descartado e == não informado
+casos_confirmados <- covid %>%
+                       filter(classificacao_final == "CONFIRMAÇÃO LABORATORIAL" | 
+                              classificacao_final == "CONFIRMAÇÃO CLÍNICO EPIDEMIOLÓGICO")
+
+# 52.828 confirmação laboratorial/confirmação clínico epidemiológico e 50.150 descartados/não informados 
+```
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+
+casos_confirmados$data_notificacao <- as.Date(casos_confirmados$data_notificacao)
+casos_confirmados$data_primeiros_sintomas <- as.Date(casos_confirmados$data_primeiros_sintomas)
+
+#Trocando valores de data_notificacao inválidas para valores de data_teste
+casos_confirmados[casos_confirmados$data_notificacao == "2000-08-03",]$data_notificacao = "2020-07-13"
+casos_confirmados[casos_confirmados$data_notificacao == "2002-12-17",]$data_notificacao = "2020-12-17"
+casos_confirmados[casos_confirmados$data_notificacao == "2020-01-19",]$data_notificacao = "2020-11-19"
+casos_confirmados[casos_confirmados$data_notificacao == "2020-02-02",]$data_notificacao = "2020-12-02"
+casos_confirmados[casos_confirmados$data_notificacao == "2020-02-22",]$data_notificacao = "2020-03-24"
+casos_confirmados[33967, ]$data_notificacao = "2021-01-14"
+casos_confirmados[38382, ]$data_notificacao = "2021-01-12"
+
+#Removendo datas de notificação inválidas
+casos_confirmados <- casos_confirmados[-c(41199, 41371), ]
+
+#Removendo casos notificados em fevereiro
+casos_confirmados <- casos_confirmados %>% 
+                      filter(data_notificacao != "2021-02-01")
+```
+
+```{r}
+
+#Criando nova variável contendo o intervalo em dias entre os primeiros sintomas e a data de notificação
+casos_confirmados$intervalo_dn_ps <- casos_confirmados$data_notificacao - casos_confirmados$data_primeiros_sintomas
+
+casos_confirmados$intervalo_dn_ps <- as.numeric(casos_confirmados$intervalo_dn_ps)
+
+#REMOVER VALORES NEGATIVOS
+
+casos_confirmados %>%
+  filter(intervalo_dn_ps < 0) %>%
+  view()
+#186 casos onde data_notificacao < data_primeiros_sintomas
+
+
+casos_confirmados %>%
+  filter(intervalo_dn_ps > 365) %>%
+  view()
+
+#Boxplot com somente casos onde data_notificacao > data_primeiros_sintomas
+casos_confirmados %>%
+  filter(intervalo_dn_ps) %>%
+  ggplot(aes(y = intervalo_dn_ps)) +
+  geom_boxplot()
+
+boxplot(casos_confirmados$intervalo_dn_ps, outline = FALSE)
+```
+
