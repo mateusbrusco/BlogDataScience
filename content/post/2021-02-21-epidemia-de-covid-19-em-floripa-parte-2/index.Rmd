@@ -1,21 +1,23 @@
 ---
-title: Epidemia de COVID-19 em Floripa - Parte 2
-author: Mateus B. de Freitas
+title: "Epidemia de COVID-19 em Floripa - Parte 2"
+author: "Mateus B. de Freitas"
 date: '2021-02-21'
-slug: epidemia-de-covid-19-em-floripa-parte-2
-categories:
-  - Análise Exploratória de Dados
+slug: epidemia-de-covid-19-em-floripa-p2
+categories: Análise Exploratória de Dados
 tags:
-  - AED
-  - Coronavírus
-  - Florianópolis
-  - Sars-CoV-2
+- AED
+- Coronavírus
+- Florianópolis
+- Sars-CoV-2
 ---
 ```{r, include=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(patchwork)
 library(gt)
 library(reshape2)
+library(lubridate)
+library(zoo)
 ```
 
 ```{r, echo=FALSE, results='hide'}
@@ -37,6 +39,7 @@ casos_confirmados <- covid %>%
 
 casos_confirmados$data_notificacao <- as.Date(casos_confirmados$data_notificacao)
 casos_confirmados$data_primeiros_sintomas <- as.Date(casos_confirmados$data_primeiros_sintomas)
+casos_confirmados$data_nascimento <- as.Date(as.yearmon(casos_confirmados$data_nascimento, "%Y-%m"))
 
 #Trocando valores de data_notificacao inválidas para valores de data_teste
 casos_confirmados[casos_confirmados$data_notificacao == "2000-08-03",]$data_notificacao = "2020-07-13"
@@ -53,34 +56,211 @@ casos_confirmados <- casos_confirmados[-c(41199, 41371), ]
 #Removendo casos notificados em fevereiro
 casos_confirmados <- casos_confirmados %>% 
                       filter(data_notificacao != "2021-02-01")
+
+#Criando variável idade e armazenando idade do paciente calculada pela diferença entre data de nascimento e 17/02/2021
+casos_confirmados$idade <- as.duration(interval(casos_confirmados$data_nascimento,
+                                                today())) %/% 
+                            as.duration(years(1))
+
+#Removendo caso onde idade é de 121 anos
+casos_confirmados <- casos_confirmados %>% 
+                      filter(idade != "121")
+
+#Adicionando variável faixa_etaria calculada a partir de idade
+casos_confirmados <- casos_confirmados %>%
+                      mutate(faixa_etaria = case_when(idade <= 14 ~ "Crianças", 
+                                                      idade > 14 & idade <= 24 ~ "Jovens", 
+                                                       idade > 24 & idade <= 64 ~ "Adultos", 
+                                                       idade >= 65 ~ "Idosos"))
+
+#Selecionando somente registros de óbito
+obitos <- casos_confirmados %>%
+  filter(obito == "SIM")
+```
+Nesta parte, vamos analisar várias das variáveis disponíveis no conjunto de dados disponibilizado no [Portal Covidômetro Floripa](https://covidometrofloripa.com.br/). Desta vez, optei por lançar uma pergunta e, em seguida, a resposta com figuras e tabelas. Bora lá!?
+
+Olhando os dados disponíveis, podemos nos perguntar: como foi a distribuição de casos se considerarmos o gênero dos infectados? Para isso, vamos analisar a variável sexo. Como podemos observar na figura \@ref(fig:figura-1), o sexo feminino registro quase 3200 casos a mais do que o masculino. Por outro lado, o maior número de óbitos foi registrado em indivíduos do sexo masculino (Figura \@ref(fig:figura-2)). 
+
+```{r figura-1, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Número de casos confirmados de COVID-19 por sexo."}
+casos_confirmados %>%
+  ggplot(aes(x = sexo, fill = sexo)) +
+  geom_bar(show.legend = FALSE) +
+  scale_y_continuous(limits = c(0, 30000)) +
+  xlab("Sexo") +
+  ylab("Número de casos") +
+  theme_classic()
 ```
 
-```{r}
 
-#Criando nova variável contendo o intervalo em dias entre os primeiros sintomas e a data de notificação
-casos_confirmados$intervalo_dn_ps <- casos_confirmados$data_notificacao - casos_confirmados$data_primeiros_sintomas
-
-casos_confirmados$intervalo_dn_ps <- as.numeric(casos_confirmados$intervalo_dn_ps)
-
-#REMOVER VALORES NEGATIVOS
-
-casos_confirmados %>%
-  filter(intervalo_dn_ps < 0) %>%
-  view()
-#186 casos onde data_notificacao < data_primeiros_sintomas
-
-
-casos_confirmados %>%
-  filter(intervalo_dn_ps > 365) %>%
-  view()
-
-#Boxplot com somente casos onde data_notificacao > data_primeiros_sintomas
-casos_confirmados %>%
-  filter(intervalo_dn_ps) %>%
-  ggplot(aes(y = intervalo_dn_ps)) +
-  geom_boxplot()
-
-boxplot(casos_confirmados$intervalo_dn_ps, outline = FALSE)
+```{r figura-2, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Número de óbitos em decorrência de COVID-19 por sexo."}
+obitos %>%
+  ggplot(aes(x = sexo, fill = sexo)) +
+  geom_bar(show.legend = FALSE) +
+  scale_y_continuous(limits = c(0, 250)) +
+  xlab("Sexo") +
+  ylab("Número de óbitos") +
+  theme_classic()
 ```
 
-Início do texto.
+Como foi a distribuição de casos e óbitos considerando a idade dos pacientes? O conjunto de dados oficial já traz a variável `faixa_idade` com agrupamentos de 10 em 10 anos. Porém, como estou praticando minhas habilidades de iniciante, utilizei o mês e o ano fornecidos em `data_nascimento` para calcular a idade das pessoas. Após muitas tentativas, consegui calcular a idade de cada um em anos. Analisando essa nova variável, percebi que a pessoa mais velha possui 121 anos. Isso deve ser um erro de digitação já que a pessoa mais velha no país tem 115 ou 116 anos ([Referência](https://g1.globo.com/ce/ceara/noticia/2020/07/10/cearense-de-115-anos-e-reconhecida-como-a-pessoa-mais-velha-do-brasil.ghtml)). Além disso, detectei 221 pessoas com idade igual ou mair do que 90 anos e 126 com idade de 0 anos (recém nascidos). Isso até é possível se considerarmos os dados do [Censo de 2010](https://censo2010.ibge.gov.br/sinopse/webservice/frm_piramide.php?codigo=420540&corhomem=3d4590&cormulher=9cdbfc). Assim, optei por remover esse único caso onde a pessoa possui 121 anos. 
+As pessoas foram agrupas pela `idade` em 4 faixas etárias (Crianças, Jovens, adultos e Idosos) na variável `faixa_etaria` ([Referência](https://pt.wikipedia.org/wiki/Predefini%C3%A7%C3%A3o:Faixas_et%C3%A1rias_do_Brasil)). Como podemos observar na figura \@ref(fig:figura-3), a maioria esmagadora dos casos foi registrado em adultos. Podemos levantar algumas hipóteses para explicar o maior número de casos em adultos: 
+
+- Existem mais indivíduos adultos na população do município. De fato, de acordo com o Censo de 2010, cerca de 57% da população de Floripa tem entre 24 e 64 anos de idade.
+- Os adultos se expõem mais ao coronavírus. É verdade que adultos vão ao supermercado, farmácia, trabalho, balada e etc.
+- Crianças e jovens (cerca de 35% da população de acordo com o Censo de 2010) não desenvolvem formas mais graves de COVID-19. De fato, sabe-se que boa parte das crianças e dos jovens são assintomáticos para o vírus ([Referência](https://brasil.elpais.com/brasil/2021-01-27/covid-19-e-criancas-o-que-se-sabe-ate-agora-dos-casos-no-brasil-e-a-preocupacao-com-as-novas-cepas.html)).
+
+```{r figura-3, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Número de casos confirmados de COVID-19 por faixa etária"}
+
+casos_confirmados %>%
+  ggplot(aes(x = factor(faixa_etaria), fill = faixa_etaria)) +
+  geom_bar(show.legend = FALSE) +
+  xlab("Faixa etária") +
+  ylab("Número de casos registrados") +
+  theme_classic()
+
+```
+
+Observando a figura \@ref(fig:figura-4), que mais de 300 pessoas idosas morreram em decorrência do novo coronavírus em Florianópolis até 31/01/2021. Esse número corresponde a quase 80% dos óbitos!! Apesar de liderar o número de casos, os somente cerca de 20% dos óbitos ocorreram em adultos. Assim, podemos estimar a taxa de letalidade ([Referência](https://coronavirus.saude.mg.gov.br/blog/81-taxa-de-mortalidade-da-covid-19)) do novo coronavírus em Floripa por faixa etária. Em crianças, a taxa de letalidade foi de 0%. Em jovens, adultos e idosos, por sua vez, a taxa de letalidade foi de respectivamente, 0,02, 0,20 e 6,42%!! Ou seja, idosos têm muito mais chances de morrer devido ao coronavírus do que as demais faixas etárias!! Mas isso, caro(a) leitor(a), não é novidade. Sabemos há muito tempo que idosos fazem parte do grupo de risco para essa doença ([Referência](https://coronavirus.saude.mg.gov.br/blog/166-envelhecimento-e-covid-19)). 
+
+```{r figura-4, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Número confirmado de óbitos por COVID-19 por faixa etária"}
+
+obitos %>%
+  ggplot(aes(x = factor(faixa_etaria), fill = faixa_etaria)) +
+  geom_bar(show.legend = FALSE) +
+  xlab("Faixa etária") +
+  ylab("Número de óbitos registrados") +
+  theme_classic()
+
+```
+
+Quais foram os principais sintomas relatados por pessoas contaminadas com o novo coronavírus? Para isso, analisamos as 5 variáveis disponíveis no conjunto de dados (`dor_garganta`, `dispneia`, `febre`, `tosse` e `outros`). Como podemos observar na figura \@ref(fig:figura-5), tosse e febre foram os sintomas mais frequentemente relatados seguidos por dor de garganta e falta de ar. Aparentemente, as pessoas contaminadas com o novo coronavírus apresentaram somente esses sintomas pois todos responderam `não` na variável `outros`.
+
+```{r figura-5, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Sintomas relatados por pessoas contaminadas pelo novo coronavírus"}
+grafico_dor_garganta <- ggplot(data = casos_confirmados) +
+                          geom_bar(aes(x = factor(dor_garganta), 
+                                       fill = dor_garganta), 
+                                   show.legend = FALSE) +
+                          labs(x = "Dor de garganta", 
+                               y = "") +
+                          theme_classic()
+
+grafico_dispneia <- ggplot(data = casos_confirmados) +
+                          geom_bar(aes(x = factor(dispneia), 
+                                       fill = dispneia), 
+                                   show.legend = FALSE) +
+                          labs(x = "Falta de ar",
+                               y = "") +
+                          theme_classic()
+
+grafico_febre <- ggplot(data = casos_confirmados) +
+                          geom_bar(aes(x = factor(febre), 
+                                       fill = febre), 
+                                   show.legend = FALSE) +
+                          labs(x = "Febre",
+                               y = "") +
+                          theme_classic()
+
+grafico_tosse <- ggplot(data = casos_confirmados) +
+                          geom_bar(aes(x = factor(tosse), 
+                                       fill = tosse), 
+                                   show.legend = FALSE) +
+                          labs(x = "Tosse",
+                               y = "") +
+                          theme_classic()
+
+graficos_casos <- (grafico_tosse + 
+                     grafico_febre) / (grafico_dor_garganta +
+                                            grafico_dispneia)
+graficos_casos
+```
+
+Analisando os sintomas relatados por pessoas contaminadas com COVID-19 e que faleceram, podemos perceber que os sintomas mais comuns foram febre, tosse e falta de ar (figura \@ref(fig:figura-6)). Dor de garganta foi o sintoma menos relatado nestes pacientes. Curiosamente, a frequência de relato desses sintomas foi muito maior quando comparada com aquela de pacientes que não faleceram (figura \@ref(fig:figura-5)). Isso pode ser explicado, possivelmente, pelo fato de que a maioria das pessoas que faleceram são idosos e que uma maior proporção de indivíduos desta faixa etária relataram sintomas como tosse e falta de ar.   
+
+```{r figura-6, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Sintomas relatados por pessoas contaminadas pelo novo coronavírus e que faleceram"}
+grafico_obito_dor_garganta <- ggplot(data = obitos) +
+                                geom_bar(aes(x = factor(dor_garganta), 
+                                             fill = dor_garganta), 
+                                         show.legend = FALSE) +
+                                labs(x = "Dor de garganta", 
+                                     y = "") +
+                                theme_classic()
+
+grafico_obito_dispneia <- ggplot(data = obitos) +
+                            geom_bar(aes(x = factor(dispneia), 
+                                         fill = dispneia), 
+                                     show.legend = FALSE) +
+                            labs(x = "Falta de ar", 
+                                 y = "") +
+                            theme_classic()
+
+grafico_obito_febre <- ggplot(data = obitos) +
+                          geom_bar(aes(x = factor(febre), 
+                                       fill = febre), 
+                                   show.legend = FALSE) +
+                          labs(x = "Febre", 
+                               y = "") +
+                          theme_classic()
+
+grafico_obito_tosse <- ggplot(data = obitos) +
+                          geom_bar(aes(x = factor(tosse), 
+                                       fill = tosse), 
+                                   show.legend = FALSE) +
+                          labs(x = "Tosse", 
+                               y = "") +
+                          theme_classic()
+
+graficos_obitos <- (grafico_obito_tosse + 
+                     grafico_obito_febre) / (grafico_obito_dor_garganta +
+                                            grafico_obito_dispneia)
+graficos_obitos
+```
+
+Como foi a distribuição de casos e óbitos nos bairros de Floripa? Inicialmente, tentei fazer um mapa. Porém, Vários bairros estão faltando no pacote e alguns nomes não batem. Então, optei por fazer uma tabela mesmo. Como podemos observar na tabela abaixo, quase a metade de todos os casos foi registrada em moradores de apenas 10 bairros. Nesta lista, temos bairros localizados no centro (Centro, Itacorubi, Agronômica e Trindade), norte (Ingleses), leste (Lagoa da Conceição) e sul (Campeche) da ilha de Floripa e também da parte continental (Estreito, Coqueiros e Capoeiras).
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+casos_confirmados %>%
+  group_by(bairro) %>%
+  summarise(casos = n()) %>%
+  arrange(desc(casos)) %>%
+  top_n(10) %>%
+  gt() %>%
+    summary_rows(
+    columns = vars(casos),
+    fns = list(Total = ~sum(.)),
+    formatter = fmt_number,
+    decimals = 0) %>%
+  tab_header(
+    title = md("**Bairros com maior número de casos de COVID-19 em Florianópolis**"),
+    subtitle = "Período de março de 2020 à janeiro de 2021") %>%
+  cols_label(
+    bairro = md("**Bairro**"),
+    casos = md("**Total de casos**"))
+  
+```
+
+No caso do óbitos, quase 60% dos óbitos foram registrados em moradores de 10 bairros. Como podemos observar na tabela abaixo, a maioria dos bairros da tabela anterior retornou. Porém, os bairros de Canasvieiras (norte da ilha), Jardim Atlântlico e Monte Cristo (ambos da região continental) entraram no lugar de Estreito, Lagoa da Conceição e Coqueiros. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+obitos %>%
+  group_by(bairro) %>%
+  summarise(casos = n()) %>%
+  arrange(desc(casos)) %>%
+  top_n(10) %>%
+  gt() %>%
+    summary_rows(
+    columns = vars(casos),
+    fns = list(Total = ~sum(.)),
+    formatter = fmt_number,
+    decimals = 0) %>%
+  tab_header(
+    title = md("**Bairros com maior número de óbitos por COVID-19 em Florianópolis**"),
+    subtitle = "Período de março de 2020 à janeiro de 2021") %>%
+  cols_label(
+    bairro = md("**Bairro**"),
+    casos = md("**Total de óbitos**"))
+  
+```
+
+E assim caro(o) leitor(a), chegamos ao final da segunda parte da análise da epidemia do novo coronavírus em Floripa. Após analisar todas essas variáveis, pude perceber que, apesar de o número de casos ter sido maior em mulheres e em adultos, o número de óbitos foi maior em homens em idosos. Além disso, os sintomas relatados com maior frequência por pessoas que testaram positivo para COVD-19 e tanto se curaram ou faleceram foram tosse e febre. Por último, 7 de cerca de 72 bairros de Florianópolis concentraram cerca da metade do número de casos e óbitos registrados até o final de janeiro de 2021.
+
+Enquanto analisava os dados, me dei conta que poderia utilizar algum método de machine learning para, utilizar as variáveis coletadas, tentar prever se uma determinada pessoa iria se curar ou falacer em decorrência de COVID-19. A elaboração desse(s) modelo(s) será abordada na terceira e última parte dessa trilogia! Até lá!
