@@ -1,0 +1,103 @@
+---
+title: "Obitos no Brasil desde 2015"
+author: "Mateus B. de Freitas"
+date: '2021-03-07'
+slug: obitos-no-brasil-desde-2015
+categories:
+- Análise Exploratória de Dados
+- Forecasting
+tags:
+- AED
+- Coronavírus
+- Sars-CoV-2
+---
+```{r, include=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(tidyverse)
+library(lubridate)
+library(tsibble)
+library(feasts)
+library(fable)
+```
+
+# Análise do número de óbitos no Brasil desde 2015
+Esse post foi motivado pela curiosidade incitada por vários comentários de pessoas em redes sociais e outras mídias que "...estão colocando COVID-19 como causa do óbito de qualquer pessoa...". Será que isso é realmente possível? Será que o número de óbitos devido ao novo coronavírus está exagerado no Brasil? 
+
+Desta forma, a minha pergunta é: realmente morreram mais pessoas no ano de 2020? 
+
+Para tentar responder a essa pergunta, analisarei neste post os dados de óbitos registrados no Brasil desde janeiro de 2015 até janeiro de 2021. os dados foram obtidos no Portal de Transparência do site [Registro Civil](https://transparencia.registrocivil.org.br/inicio). Ali, podemos encontrar o número de registros de nascimento, casamento e óbito de todos os municípios do país. Como não encontrei um arquivo csv disponível, tive que copiar os dados mês a mês... Se você souber de uma forma mais fácil de obter essas informações, deixa os detalhes nos comentários...
+
+Após obter os dados, agrupei todos os estados e somei os óbitos resultando no total de óbitos por mês no país todo. Como podemos ver na figura \@ref(fig:figura-1), o número de óbitos por mês vem crescendo anualmente no país. Em 2015, morreram cerca de 75.000 pessoas por mês no país. Em 2020, por sua vez, o número médio de óbitos por mês foi de 120.000!
+```{r, echo=FALSE, results='hide'}
+#Carrega arquivo com todos os óbitos registrados por estado e por mês desde 2015
+obitos <- read.csv2("obitos.csv", sep = ";", fileEncoding = "UTF-8") 
+
+#Define tipo da variável data para data
+obitos$data <- as.Date(obitos$data)
+
+#Converte variável data para ano/mês e objeto para tsibble
+obitos <- obitos %>%
+            mutate(data = yearmonth(data)) %>%
+            tsibble(index = data,
+                    key = estado)
+
+#Verifica se existem NAs
+obitos[!complete.cases(obitos), ]
+
+#Agrupo óbitos por estado para total
+total <- obitos %>%
+            group_by() %>%
+            summarise(total = sum(obitos))
+
+head(obitos)
+tail(obitos)
+
+```
+
+```{r, figura-1, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Total de óbitos por mês no Brasil no período de janeiro de 2015 até fevereiro de 2021"}
+#Plota óbitos por mês
+total %>% 
+  autoplot(total) +
+  labs(x = "Ano/mês",
+       y = "Óbitos") +
+  theme_classic()
+```
+
+Olhando ainda para a figura \@ref(fig:figura-1) podemos perceber que o ano de 2020 foi marcado por um grande pico. Nos anos anteriores, por sua vez, podemos observar vários picos resultantes de, provavelmente, um componente sazonal. Ou seja, morrem mais pessoas em alguns meses do ano se comparado com os demais. Podemos observar esse componente e a tendência da série na figura abaixo. 
+
+```{r, figura-2, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Decomposição do número de óbitos desde 2015 usando Loess"}
+
+total %>%
+  model(STL(total)) %>%
+  components() %>%
+  autoplot() +
+  theme(legend.position = "none")
+```
+
+Na figura \@ref(fig:figura-2), utilizamos o método de decomposição da sazonalidade e da tendência usando Loess para extrair algumas informações da nossa série temporal. Primeiramente, observe no segundo gráfico (`trend`) que existe uma tendência de incremento no número de óbitos. Observe no terceiro gráfico (`season_year`) que também existe uma sazonalidade no número de óbitos. Para o ano de 2020, podemos observar que a sazonalidade se repetiu. Por outro lado, a linha de tendência parece estar mais inclinada. 
+
+Considerando as informações obtidas, resolvi elaborar um modelo para prever o número de óbitos em 2020 com base nos anos anteriores. Essa previsão seria um "ano normal" sem pandemia de COVID-19. Assim, podemos comparar a previsão como o que realmente aconteceu e verificar se, de fato, se morreram ou não mais pessoas no ano de 2020.
+
+Para isso, apliquei o modelo de previsão de suavização exponencial no conjunto de dados contendo os óbitos de janeiro de 2015 até dezembro de 2019. Observe na figura abaixo que plotamos uma linha azul correspondente à previsão do modelo para o ano de 2020 e faixas cinza escuro e claro para os intervalos de confiança de 80 e 95%, respectivamente.
+
+```{r, figura-3, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.cap="Total de óbitos por mês no Brasil no período de janeiro de 2015 até dezembro de 2019 com previsão via suavização exponencial para 2020 e dados reais do ano de 2020"}
+teste <- total %>% 
+          filter(year(data) < 2020)
+
+modelo_ets <- teste %>%
+                model(ETS(total))
+
+modelo_ets %>%
+  forecast(h = "1 year") %>%
+  autoplot(total, size = 1) +
+  labs(x = "Ano/mês",
+       y = "Óbitos") +
+  theme_classic()
+```
+
+Como podemos observar na figura \@ref(fig:figura-3), o número de óbitos estava dentro do previsto no início do ano. No entanto, a partir do segundo trimestre de 2020, o número de óbitos aumentou drasticamente permanecendo fora dos intervalos de confiança determinados até o final do ano. 
+
+Assim caro(a) leitor(a), podemos afirmar que o número de óbitos no ano de 2020 no Brasil foi de fato maior do que aquele previsto com base nos anos anteriores. Isso se deve, provavelmente, à pandemia do novo coronavírus que matou e continua matando muitos brasileiros e brasileiras.  
+
+Tem alguma sugestão ou comentário para melhorar o post?! Envie para nós abaixo! 
+
+Como sempre, todos os conjuntos de dados e o código utilizados estão disponíveis no [meu GitHub](https://github.com/mateusbrusco/BlogDataScience/tree/main/content).
